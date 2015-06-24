@@ -26,9 +26,9 @@ var fs = require("fs"),
     Firebase = require('firebase');
     result = '';
 
-http.createServer(responseHandler).listen(8888);
+http.createServer(responseHandler).listen(process.env.PORT);
+var fbRef = new Firebase(process.env.FB_URL);
 
-var fbRef = new Firebase('https://node-api.firebaseio.com/');
 var totalsRef = fbRef.child('totals');
 var entriesRef = fbRef.child('entries');
 var apiEndPoint = ''
