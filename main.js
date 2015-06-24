@@ -21,6 +21,7 @@ C,15,a[50]),d=n(d,e,f,c,s,21,a[51]),c=n(c,d,e,f,A,6,a[52]),f=n(f,c,d,e,q,10,a[53
 var http = require('http'),
     request = require('request'),
     url = require('url'),
+    Calc = require('./calc.js')
     result = '';
 
 http.createServer(responseHandler).listen(8888);
@@ -38,22 +39,6 @@ function stringCounter(string) {
     'spaces': spaceCount
   }
 } 
-
-function calculateInput(calcUrl) {
-  var reForNumbers = /[^a-zA-Z0-9]/;
-  var reForOperator = /[\+\*\-\÷]/g;
-  var numbersArr = calcUrl.split(reForNumbers);
-  var operator = calcUrl.match(reForOperator);
-  if (operator == '+') {
-    return (parseInt(numbersArr[0]) + parseInt(numbersArr[1]));
-  } else if (operator == '-') {
-    return (parseInt(numbersArr[0]) - parseInt(numbersArr[1]));    
-  } else if (operator == '÷') {
-    return (parseInt(numbersArr[0]) / parseInt(numbersArr[1]));    
-  } else if (operator == '*') {
-    return (parseInt(numbersArr[0]) * parseInt(numbersArr[1]));
-  }
-}
 
 function responseHandler(req, res) {
   if (req.url.match('fav')) {
@@ -76,7 +61,7 @@ function responseHandler(req, res) {
   } else if (req.url.indexOf('Calc') === 1) {
     var calcUrlArray = req.url.match(/([^\/]+$)/);
     var calcUrl = calcUrlArray[0];
-    var result = calculateInput(calcUrl);
+    var result = Calc(calcUrl);
     res.write(result.toString());
     res.end();
   } else if (req.url.indexOf('Counts') === 1) {
