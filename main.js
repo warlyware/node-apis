@@ -18,13 +18,17 @@ d,e,j,9,a[29]),e=m(e,f,c,d,u,14,a[30]),d=m(d,e,f,c,A,20,a[31]),c=l(c,d,e,f,s,4,a
 C,15,a[50]),d=n(d,e,f,c,s,21,a[51]),c=n(c,d,e,f,A,6,a[52]),f=n(f,c,d,e,q,10,a[53]),e=n(e,f,c,d,y,15,a[54]),d=n(d,e,f,c,w,21,a[55]),c=n(c,d,e,f,v,6,a[56]),f=n(f,c,d,e,D,10,a[57]),e=n(e,f,c,d,t,15,a[58]),d=n(d,e,f,c,B,21,a[59]),c=n(c,d,e,f,r,6,a[60]),f=n(f,c,d,e,z,10,a[61]),e=n(e,f,c,d,j,15,a[62]),d=n(d,e,f,c,x,21,a[63]);b[0]=b[0]+c|0;b[1]=b[1]+d|0;b[2]=b[2]+e|0;b[3]=b[3]+f|0},_doFinalize:function(){var a=this._data,k=a.words,b=8*this._nDataBytes,h=8*a.sigBytes;k[h>>>5]|=128<<24-h%32;var l=s.floor(b/
 4294967296);k[(h+64>>>9<<4)+15]=(l<<8|l>>>24)&16711935|(l<<24|l>>>8)&4278255360;k[(h+64>>>9<<4)+14]=(b<<8|b>>>24)&16711935|(b<<24|b>>>8)&4278255360;a.sigBytes=4*(k.length+1);this._process();a=this._hash;k=a.words;for(b=0;4>b;b++)h=k[b],k[b]=(h<<8|h>>>24)&16711935|(h<<24|h>>>8)&4278255360;return a},clone:function(){var a=t.clone.call(this);a._hash=this._hash.clone();return a}});r.MD5=t._createHelper(q);r.HmacMD5=t._createHmacHelper(q)})(Math);
 
-var http = require('http'),
+var fs = require("fs"), 
+    http = require('http'),
     request = require('request'),
     url = require('url'),
-    Calc = require('./calc.js')
+    Calc = require('./calc.js'),
+    Firebase = require('firebase');
     result = '';
 
 http.createServer(responseHandler).listen(8888);
+
+var fbRef = new Firebase('https://node-api.firebaseio.com/');
 
 function stringCounter(string) {
   var wordArray = string.split(' ');
@@ -47,14 +51,22 @@ function responseHandler(req, res) {
   }
 
   if (req.url === '/') {
-    res.write('Hello world!');
-    res.end();
+    res.writeHead(200, {"Content-Type": "text/html"});
+    fs.readFile('./index.html', 'utf8', function (err,data) {
+      res.end(data);
+    });
   } else if (req.url.indexOf('gravatarUrl') === 1) {
     var gravatarHashUrlArray = req.url.match(/([^/]+$)/);
     var gravatarUrlHash = gravatarHashUrlArray[0];
     var gravatarHash = CryptoJS.MD5(gravatarUrlHash);
     var gravatarHashString = gravatarHash.toString(CryptoJS.enc.Hex);
     var result = 'http://www.gravatar.com/avatar/' + gravatarHashString;
+    fbRef.push({ 
+      apiEndPoint: gravatarHashUrlArray[0],
+      apiValue: gravatarHash,
+      timestamp: Firebase.ServerValue.TIMESTAMP,
+      userAgent: req.headers['user-agent']
+    });
     res.write(result);
     res.end();
     return result;
@@ -62,6 +74,12 @@ function responseHandler(req, res) {
     var calcUrlArray = req.url.match(/([^\/]+$)/);
     var calcUrl = calcUrlArray[0];
     var result = Calc(calcUrl);
+    fbRef.push({ 
+      apiEndPoint: calcUrlArray[0],
+      apiValue: result,
+      timestamp: Firebase.ServerValue.TIMESTAMP,
+      userAgent: req.headers['user-agent']
+    });
     res.write(result.toString());
     res.end();
   } else if (req.url.indexOf('Counts') === 1) {
@@ -69,6 +87,12 @@ function responseHandler(req, res) {
     // var stringToCount = countsUrlArray[0].replace(/%[2][0]/g, ' ');
     var stringToCount = decodeURI(countsUrlArray[0]);
     var result = stringCounter(stringToCount);
+    fbRef.push({ 
+      apiEndPoint: countsUrlArray[0],
+      apiValue: result,
+      timestamp: Firebase.ServerValue.TIMESTAMP,
+      userAgent: req.headers['user-agent']
+    });    
     res.write(JSON.stringify(result));
     res.end();
   }
