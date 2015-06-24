@@ -9,19 +9,22 @@
   <script src="https://cdn.firebase.com/libs/angularfire/1.1.1/angularfire.min.js"></script>
   <script>
     var app = angular.module("fs", ["firebase"]);
-    app.controller("fsCtrl", function($scope, $http, $firebaseObject) {
+    app.controller("fsCtrl", function($scope, $http, $firebaseObject, $firebaseArray) {
       var ref = new Firebase("https://node-api.firebaseio.com");
       var syncObject = $firebaseObject(ref);
-      // download the data into a local object
-      // $scope.data = $firebaseObject(ref);
-      syncObject.$bindTo($scope, 'entries');
-      // putting a console.log here won't work, see below
+      var entriesRef = ref.child('entries');
+      var totalsRef = ref.child('totals');
+      $scope.entries = $firebaseArray(entriesRef);
+      syncObject.$bindTo($scope, 'totals');
     });
   </script>
 </head>
   <body>
     <div ng-controller="fsCtrl">
-      <div ng-repeat="entry in entries"></div>
+      <input type="text" ng-model="totals.test">
+      <div ng-repeat="entry in entries">
+        {{entry.apiEndPoint}} | {{entry.apiValue}}
+      </div>
     </div>
   </body>
 </html>

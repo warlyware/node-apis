@@ -29,6 +29,9 @@ var fs = require("fs"),
 http.createServer(responseHandler).listen(8888);
 
 var fbRef = new Firebase('https://node-api.firebaseio.com/');
+var totalsRef = fbRef.child('totals');
+var entriesRef = fbRef.child('entries');
+var apiEndPoint = ''
 
 function stringCounter(string) {
   var wordArray = string.split(' ');
@@ -61,21 +64,23 @@ function responseHandler(req, res) {
     var gravatarHash = CryptoJS.MD5(gravatarUrlHash);
     var gravatarHashString = gravatarHash.toString(CryptoJS.enc.Hex);
     var result = 'http://www.gravatar.com/avatar/' + gravatarHashString;
+    apiEndPoint = 'gravatarUrl';
+    console.log(apiEndPoint);
     fbRef.push({ 
-      apiEndPoint: gravatarHashUrlArray[0],
-      apiValue: gravatarHash,
+      apiEndPoint: 'gravatarUrl',
+      apiValue: gravatarHashString,
       timestamp: Firebase.ServerValue.TIMESTAMP,
       userAgent: req.headers['user-agent']
     });
     res.write(result);
     res.end();
-    return result;
   } else if (req.url.indexOf('Calc') === 1) {
     var calcUrlArray = req.url.match(/([^\/]+$)/);
     var calcUrl = calcUrlArray[0];
     var result = Calc(calcUrl);
+    apiEndPoint = 'Calc';
     fbRef.push({ 
-      apiEndPoint: calcUrlArray[0],
+      apiEndPoint: 'Calc',
       apiValue: result,
       timestamp: Firebase.ServerValue.TIMESTAMP,
       userAgent: req.headers['user-agent']
@@ -84,11 +89,11 @@ function responseHandler(req, res) {
     res.end();
   } else if (req.url.indexOf('Counts') === 1) {
     var countsUrlArray = req.url.match(/([^\/]+$)/);
-    // var stringToCount = countsUrlArray[0].replace(/%[2][0]/g, ' ');
     var stringToCount = decodeURI(countsUrlArray[0]);
     var result = stringCounter(stringToCount);
+    apiEndPoint = 'Counts';
     fbRef.push({ 
-      apiEndPoint: countsUrlArray[0],
+      apiEndPoint: 'Counts',
       apiValue: result,
       timestamp: Firebase.ServerValue.TIMESTAMP,
       userAgent: req.headers['user-agent']
@@ -96,4 +101,10 @@ function responseHandler(req, res) {
     res.write(JSON.stringify(result));
     res.end();
   }
+  var useCounter = totalsRef.child(apiEndPoint);
+  console.log(apiEndPoint);
+  useCounter.transaction(function(current_value) {
+    return (current_value || 0) + 1;
+  });
+
 }
